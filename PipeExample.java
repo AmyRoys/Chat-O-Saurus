@@ -1,31 +1,38 @@
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URISyntaxException;
 import java.util.Scanner;
 
 public class PipeExample {
 
     public static void main(String[] args) throws IOException {
+        final PipedOutputStream pipeOutput = new PipedOutputStream();
+        final PipedInputStream pipeInput = new PipedInputStream(pipeOutput);
 
-        final PipedOutputStream output1 = new PipedOutputStream();
-        final PipedInputStream input1 = new PipedInputStream(output1);
-        final PipedOutputStream output2 = new PipedOutputStream();
-        final PipedInputStream input2 = new PipedInputStream(output2);
+        final ServerSocket serverSocket = new ServerSocket(1234);
+        final Socket clientSocket = new Socket("localhost", 1234);
+        final Socket serverClientSocket = serverSocket.accept();
 
-        Thread thread1 = new Thread(() -> {
+        Thread pipeThread = new Thread(() -> {
             try {
-                int data = input1.read();
+                int data = pipeInput.read();
                 StringBuilder modifiedData = new StringBuilder();
 
                 while (data != -1) {
                     char character = (char) data;
                     modifiedData.append(character);
-                    data = input1.read();
+                    data = pipeInput.read();
                 }
                 String response = OpenAIApiCaller.callOpenAIApi(modifiedData.toString());
-                output2.write(response.getBytes());
-                output2.close();
+                OutputStream outputStream = serverClientSocket.getOutputStream();
+                outputStream.write(response.getBytes());
+                outputStream.close();
+                serverClientSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (URISyntaxException | InterruptedException e) {
@@ -33,24 +40,27 @@ public class PipeExample {
             }
         });
 
-        Thread thread2 = new Thread(() -> {
+        Thread socketThread = new Thread(() -> {
             try {
+                InputStream inputStream = clientSocket.getInputStream();
+                OutputStream outputStream = pipeOutput;
                 Scanner sc = new Scanner(System.in);
                 System.out.print("You are in Thread 2 - Enter your prompt: ");
                 String prompt = sc.nextLine();
-                output1.write(prompt.getBytes());
-                output1.close();
-                int data = input2.read();
+                outputStream.write(prompt.getBytes());
+                outputStream.close();
+                int data = inputStream.read();
                 while (data != -1) {
                     System.out.print((char) data);
-                    data = input2.read();
+                    data = inputStream.read();
                 }
+                clientSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         });
 
-        thread2.start();
-        thread1.start();
+        pipeThread.start();
+        socketThread.start();
     }
 }
