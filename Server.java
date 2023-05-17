@@ -2,26 +2,52 @@ import java.io.*;
 import java.net.*;
 
 public class Server {
-    public static void main(String[] args) throws URISyntaxException, InterruptedException {
+    public static void main(String[] args) {
         try {
-            ServerSocket sock = new ServerSocket(6013);
-            // now listen for connections
+            ServerSocket serverSocket = new ServerSocket(6013);
+
             while (true) {
-                Socket client = sock.accept();
-                // we have a connection
-                BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                String input = in.readLine(); // Read the input from the client
-
-                PrintWriter pout = new PrintWriter(client.getOutputStream(), true);
-                // call the OpenAIApiCaller method with the input parameter
-                String response = OpenAIApiCaller.callOpenAIApi(input);
-                pout.println(response); // Send the response back to the client
-
-                // close the socket and resume listening for more connections
-                client.close();
+                Socket clientSocket = serverSocket.accept();
+                // Start a new thread for each client connection
+                Thread clientThread = new ClientThread(clientSocket);
+                clientThread.start();
+                System.out.println("Client connected");
+                System.out.println(serverSocket.getInetAddress());
             }
         } catch (IOException ioe) {
             System.err.println(ioe);
+        }
+    }
+
+    static class ClientThread extends Thread {
+        private Socket clientSocket;
+
+        public ClientThread(Socket socket) {
+            this.clientSocket = socket;
+        }
+
+        @Override
+        public void run() {
+            try {
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                String input = in.readLine(); // Read the input from the client
+
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                // Call the OpenAIApiCaller method with the input parameter
+                String response = null;
+                try {
+                    response = OpenAIApiCaller.callOpenAIApi(input);
+                } catch (URISyntaxException e) {
+                    throw new RuntimeException(e);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                out.println(response); // Send the response back to the client
+
+                clientSocket.close();
+            } catch (IOException ioe) {
+                System.err.println(ioe);
+            }
         }
     }
 }
