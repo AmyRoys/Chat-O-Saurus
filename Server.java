@@ -44,7 +44,7 @@ public class Server {
                 }
                 double score = ClaimBusterAPI.getClaimBusterScore(response);
                 String score_string = "";
-                if (score <= .4){
+                if (score >= .4){
                     score_string = "%This response may not need to be fact checked.";
                 } else {
                     score_string = "%This response may need to be fact checked.";
