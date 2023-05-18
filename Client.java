@@ -20,7 +20,8 @@ public class Client {
             InputStream in = sock.getInputStream();
             BufferedReader bin = new BufferedReader(new InputStreamReader(in));
             String response = bin.readLine();
-            System.out.println("Server response: " + response);
+            String result = response.replaceAll(".%", ".\n");
+            System.out.println("Server response: \n" + result);
 
             sock.close();
         } catch (IOException ioe) {

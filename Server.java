@@ -42,7 +42,18 @@ public class Server {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                out.println(response); // Send the response back to the client
+                double score = ClaimBusterAPI.getClaimBusterScore(response);
+                String score_string = "";
+                if (score <= .4){
+                    score_string = "%This response may not need to be fact checked.";
+                } else {
+                    score_string = "%This response may need to be fact checked.";
+                }
+                String format = String.format("%.2f", score);
+
+                format = "%ClaimBuster score: " + format + " " + score_string + "%";
+                String new_response = response + format;
+                out.println(new_response); // Send the response back to the client
 
                 clientSocket.close();
             } catch (IOException ioe) {
