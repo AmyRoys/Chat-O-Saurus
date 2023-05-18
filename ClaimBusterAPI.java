@@ -13,7 +13,7 @@ import java.net.URLEncoder;
 public class ClaimBusterAPI {
 
     public static void main(String[] args) {
-        String input = "Donald Trump is the current president of the United States.";
+        String input = "Donald Duck is the current president of the United States.";
         double score = getClaimBusterScore(input);
         System.out.println("ClaimBuster score for \"" + input + "\": " + score);
     }
