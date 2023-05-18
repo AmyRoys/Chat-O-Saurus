@@ -5,10 +5,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Server {
     private static Queue<String> messageQueue = new ConcurrentLinkedQueue<String>();
+    private static Queue<String> responseQueue = new ConcurrentLinkedQueue<String>();
+    
     public static void main(String[] args) {
         try {
             ServerSocket serverSocket = new ServerSocket(6013);
-
+            
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 // Start a new thread for each client connection
@@ -29,52 +31,48 @@ public class Server {
                 String response = null;
                 try {
                     response = OpenAIApiCaller.callOpenAIApi(input);
-                } catch (URISyntaxException e) {
-                    throw new RuntimeException(e);
-                } catch (InterruptedException e) {
+                } catch (URISyntaxException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
                 double score = ClaimBusterAPI.getClaimBusterScore(response);
                 String score_string = "";
-                if (score >= .4){
-                    score_string = "%This response may not need to be fact checked.";
-                } else {
-                    score_string = "%This response may need to be fact checked.";
-                }
+                String scoreString = (score >= 0.4) ? "%This response may not need to be fact checked." : "%This response may need to be fact checked.";
+                String formattedScore = String.format("%.2f", score);
+                String formattedResponse = response + "%ClaimBuster score: " + formattedScore + " " + scoreString + "%";
+                
+                responseQueue.add(formattedResponse);
                 String format = String.format("%.2f", score);
                 
                 format = "%ClaimBuster score: " + format + " " + score_string + "%";
                 String new_response = response + format;
                 out.println(new_response); // Send the response back to the client
                 
-                messageQueue.add(new_response);
-                out.println("Message received by server.");
-//
-//                for (String message : messageQueue) {
-//                    if (!message.equals(new_response)){
-//                        out.println("Received message: " + message);
-//                    }
-//                }
-                System.out.println(new_response);
+                for (String message : messageQueue) {
+                    if (!message.equals(formattedResponse)) {
+                        out.println("Received message: " + message);
+                    }
+                }
+                for (String responseMessage : responseQueue) {
+                    out.println("Received response: " + responseMessage);
+                }
                 
+                clientSocket.close();
             }
         } catch (IOException ioe) {
             System.err.println(ioe);
         }
     }
-
+    
     static class ClientThread extends Thread {
         private Socket clientSocket;
-
+        
         public ClientThread(Socket socket) {
             this.clientSocket = socket;
         }
-
+        
         @Override
         public void run() {
             try {
-                
-                
                 clientSocket.close();
             } catch (IOException ioe) {
                 System.err.println(ioe);
