@@ -12,25 +12,26 @@ public class Server {
         this.serverSocket = serverSocket;
     }
     
-    public void start(){
-    try {
-        while (!serverSocket.isClosed()) {
-            Socket clientSocket = serverSocket.accept();
-            System.out.println("A new client has connected");
-            Thread clientThread = new ClientThread(clientSocket);
-            clientThread.start();
-        }
-    } catch (IOException e) {
+    public void start() {
+        try {
+            while (!serverSocket.isClosed()) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("A new client has connected");
+                Thread clientThread = new ClientThread(clientSocket);
+                clientThread.start();
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    public void close(){
-        try{
-            if(serverSocket != null){
+    
+    public void close() {
+        try {
+            if (serverSocket != null) {
                 serverSocket.close();
             }
             
-        }catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -46,7 +47,7 @@ public class Server {
             
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("A New client has connected");
+                System.out.println("A new client has connected");
                 // Start a new thread for each client connection
                 Thread clientThread = new ClientThread(clientSocket);
                 clientThread.start();
@@ -94,23 +95,6 @@ public class Server {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-    
-    static class ClientThread extends Thread {
-        private Socket clientSocket;
-        
-        public ClientThread(Socket socket) {
-            this.clientSocket = socket;
-        }
-        
-        @Override
-        public void run() {
-            try {
-                clientSocket.close();
-            } catch (IOException ioe) {
-                System.err.println(ioe);
-            }
         }
     }
 }
