@@ -16,27 +16,12 @@ public class Server {
                 clientThread.start();
                 System.out.println("Client connected");
                 System.out.println(serverSocket.getInetAddress());
-            }
-        } catch (IOException ioe) {
-            System.err.println(ioe);
-        }
-    }
-
-    static class ClientThread extends Thread {
-        private Socket clientSocket;
-
-        public ClientThread(Socket socket) {
-            this.clientSocket = socket;
-        }
-
-        @Override
-        public void run() {
-            try {
+                
                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 String input = in.readLine(); // Read the input from the client
                 //add clients input to queue
                 messageQueue.add(input);
-
+                
                 PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
                 // Call the OpenAIApiCaller method with the input parameter
                 out.println("Message received by server.");
@@ -57,16 +42,38 @@ public class Server {
                     score_string = "%This response may need to be fact checked.";
                 }
                 String format = String.format("%.2f", score);
-
+                
                 format = "%ClaimBuster score: " + format + " " + score_string + "%";
                 String new_response = response + format;
                 out.println(new_response); // Send the response back to the client
-            
-                messageQueue.add(new_response);
                 
-                for (String message : messageQueue) {
-                    out.println("Received message: " + message);
-                }
+                messageQueue.add(new_response);
+                out.println("Message received by server.");
+//
+//                for (String message : messageQueue) {
+//                    if (!message.equals(new_response)){
+//                        out.println("Received message: " + message);
+//                    }
+//                }
+                System.out.println(new_response);
+                
+            }
+        } catch (IOException ioe) {
+            System.err.println(ioe);
+        }
+    }
+
+    static class ClientThread extends Thread {
+        private Socket clientSocket;
+
+        public ClientThread(Socket socket) {
+            this.clientSocket = socket;
+        }
+
+        @Override
+        public void run() {
+            try {
+                
                 
                 clientSocket.close();
             } catch (IOException ioe) {
