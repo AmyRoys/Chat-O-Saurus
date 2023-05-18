@@ -41,6 +41,8 @@ public class Server {
     public static void main(String[] args) {
         try {
             ServerSocket serverSocket = new ServerSocket(6013);
+            Server server = new Server(serverSocket);
+            server.start();
             
             while (true) {
                 Socket clientSocket = serverSocket.accept();
@@ -90,8 +92,8 @@ public class Server {
                 
                 clientSocket.close();
             }
-        } catch (IOException ioe) {
-            System.err.println(ioe);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
     
