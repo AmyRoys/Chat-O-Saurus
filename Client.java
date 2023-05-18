@@ -3,7 +3,7 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class Client {
-        private Socket socket;
+        public Socket socket;
         private BufferedReader bufferedReader;
         private BufferedWriter bufferedWriter;
         private String clientUsername;
@@ -71,7 +71,7 @@ public class Client {
             Scanner scanner = new Scanner(System.in);
             System.out.println("Enter your username: ");
             String username = scanner.nextLine();
-            Socket socket = new Socket("localhost", 1234);
+            Socket socket = new Socket("localhost", 6013);
             Client client = new Client(socket, username);
             client.listenForMessages();
             client.sendMessage();

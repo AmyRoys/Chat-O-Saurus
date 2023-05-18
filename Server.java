@@ -1,23 +1,30 @@
-import java.io.*;
-import java.net.*;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URISyntaxException;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+
 
 public class Server {
-    private ServerSocket serverSocket;
+    private static ServerSocket serverSocket;
     
     public Server(ServerSocket serverSocket) {
         this.serverSocket = serverSocket;
     }
     
-    public void start() {
+    public void start() throws IOException {
         try {
             while (!serverSocket.isClosed()) {
+                System.out.println("Waiting for a client to connect");
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("A new client has connected");
-                Thread clientThread = new ClientThread(clientSocket);
+                ClientHandler clientHandler = new ClientHandler(clientSocket);
+                Thread clientThread = new Thread(clientHandler);
                 clientThread.start();
             }
         } catch (IOException e) {
@@ -25,7 +32,7 @@ public class Server {
         }
     }
     
-    public void close() {
+    public static void close() {
         try {
             if (serverSocket != null) {
                 serverSocket.close();
@@ -46,20 +53,13 @@ public class Server {
             server.start();
             
             while (true) {
-                Socket clientSocket = serverSocket.accept();
-                System.out.println("A new client has connected");
-                // Start a new thread for each client connection
-                Thread clientThread = new ClientThread(clientSocket);
-                clientThread.start();
-                System.out.println("Client connected");
-                System.out.println(serverSocket.getInetAddress());
-                
-                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                Socket socket = new Socket("localhost", 6013);
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String input = in.readLine(); // Read the input from the client
                 //add clients input to queue
                 messageQueue.add(input);
                 
-                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 // Call the OpenAIApiCaller method with the input parameter
                 out.println("Message received by server.");
                 
@@ -90,8 +90,7 @@ public class Server {
                 for (String responseMessage : responseQueue) {
                     out.println("Received response: " + responseMessage);
                 }
-                
-                clientSocket.close();
+                close();
             }
         } catch (IOException e) {
             e.printStackTrace();

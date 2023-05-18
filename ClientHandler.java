@@ -5,11 +5,12 @@ import java.util.ArrayList;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-public class ClientHandler {
-	public static ArrayList<Socket> clientSockets = new ArrayList<Socket>();
+public class ClientHandler implements Runnable{
+	public static ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
 	private Socket socket;
 	private BufferedReader bufferedReader;
 	private BufferedWriter bufferedWriter;
+	private String clientUsername;
 	
 	
 	public ClientHandler(Socket socket) {
@@ -22,7 +23,7 @@ public class ClientHandler {
 			broadcastMessage("Server: " + this.clientUsername + " has joined the chat.");
 			
 		}catch(Exception e) {
-			e.printStackTrace();
+			closeEverything(socket, bufferedWriter, bufferedReader);
 		}
 		
 	}
@@ -31,7 +32,7 @@ public class ClientHandler {
 		String message;
 		while(socket.isConnected()){
 			try{
-				message = bufferedReader.readline();
+				message = bufferedReader.readLine();
 				if(message.equals("exit")){
 					closeEverything(socket, bufferedWriter, bufferedReader);
 					break;
