@@ -1,7 +1,10 @@
 import java.io.*;
 import java.net.*;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Server {
+    private static Queue<String> messageQueue = new ConcurrentLinkedQueue<String>();
     public static void main(String[] args) {
         try {
             ServerSocket serverSocket = new ServerSocket(6013);
@@ -31,9 +34,13 @@ public class Server {
             try {
                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 String input = in.readLine(); // Read the input from the client
+                //add clients input to queue
+                messageQueue.add(input);
 
                 PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
                 // Call the OpenAIApiCaller method with the input parameter
+                out.println("Message received by server.");
+                
                 String response = null;
                 try {
                     response = OpenAIApiCaller.callOpenAIApi(input);
@@ -54,7 +61,13 @@ public class Server {
                 format = "%ClaimBuster score: " + format + " " + score_string + "%";
                 String new_response = response + format;
                 out.println(new_response); // Send the response back to the client
-
+            
+                messageQueue.add(new_response);
+                
+                for (String message : messageQueue) {
+                    out.println("Received message: " + message);
+                }
+                
                 clientSocket.close();
             } catch (IOException ioe) {
                 System.err.println(ioe);
