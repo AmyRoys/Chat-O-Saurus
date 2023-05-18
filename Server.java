@@ -2,8 +2,39 @@ import java.io.*;
 import java.net.*;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 public class Server {
+    private ServerSocket serverSocket;
+    
+    public Server(ServerSocket serverSocket) {
+        this.serverSocket = serverSocket;
+    }
+    
+    public void start(){
+    try {
+        while (!serverSocket.isClosed()) {
+            Socket clientSocket = serverSocket.accept();
+            System.out.println("A new client has connected");
+            Thread clientThread = new ClientThread(clientSocket);
+            clientThread.start();
+        }
+    } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void close(){
+        try{
+            if(serverSocket != null){
+                serverSocket.close();
+            }
+            
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+    
     private static Queue<String> messageQueue = new ConcurrentLinkedQueue<String>();
     private static Queue<String> responseQueue = new ConcurrentLinkedQueue<String>();
     
@@ -13,6 +44,7 @@ public class Server {
             
             while (true) {
                 Socket clientSocket = serverSocket.accept();
+                System.out.println("A New client has connected");
                 // Start a new thread for each client connection
                 Thread clientThread = new ClientThread(clientSocket);
                 clientThread.start();
